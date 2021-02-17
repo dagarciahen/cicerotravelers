@@ -1,0 +1,136 @@
+{% extends 'layout/base.html' %}
+{% block title %}{{ tour.title }} - Tour {% endblock %}
+{% block content %}
+<section class="container">
+    {% include 'sections/flashed-messages.html' %}
+    <div class="row">
+        <div class="col-12">
+            <div class="my-5">
+                <h1 class="h2">{{ tour.title }}</h1>
+                <div class="lead">
+                    <span class="me-4" title="Published on"><i class="bi bi-clock"></i> {{ moment(tour.date).format('dddd, MMMM Do YYYY, h:mm:ss a') }}</span>
+                    <span title="Location"><i class="bi bi-geo-alt"></i> {{ tour.city }}, {{ tour.country.name }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-8">
+            <section class="row mb-4">
+        <div class="col">
+            <h2 class="lead">Description</h2>
+            <p>{{ tour.description }}</p>
+        </div>
+    </section>
+            <section class="row mb-4">
+        <div class="col">
+
+        </div>
+    </section>
+            <section class="row mt-4 mb-5">
+        <div class="col">
+            <h2 class="lead">Meet the tour guide</h2>
+            <div class="card mb-3" style="max-width: 400px;">
+              <div class="row g-0">
+                <div class="col-12 d-flex">
+                    <div class="card-pic-container my-4 ms-4">
+                    {% if tour.author.profile.picture %}
+                        <img class="img-fluid" src="{{ url_for('static', filename='images/profiles' + '/' + tour.author.profile.picture) }}" alt="{{ tour.author.profile.name }} {{ tour.author.profile.last_name }}">
+                    {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="#399de4" class="bi bi-person-circle" viewBox="0 0 16 16">
+                          <path d="M13.468 12.37C12.758 11.226 11.195 10 8 10s-4.757 1.225-5.468 2.37A6.987 6.987 0 0 0 8 15a6.987 6.987 0 0 0 5.468-2.63z"/>
+                          <path fill-rule="evenodd" d="M8 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                          <path fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8z"/>
+                        </svg>
+                    {% endif %}
+                    </div>
+                      <div class="card-body">
+                        <h5 class="card-title">{{ tour.author.profile.name }} {{ tour.author.profile.last_name }}</h5>
+                        <p class="card-text">{{ tour.author.profile.bio }}</p>
+                          <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group">
+                              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('users.profile', user_id=tour.user_id) }}">View profile</a>
+                            </div>
+                          </div>
+                      </div>
+                </div>
+              </div>
+            </div>
+            <p></p>
+        </div>
+    </section>
+        </div>
+        <div class="col-4">
+            {%  set ns = namespace(show_unfavorite=False) %}
+            {% for favorited_by in tour.favorited_by %}
+                {% if favorited_by.user_id == current_user.user_id %}
+                    {% set ns.show_unfavorite = True %}
+                {% endif %}
+            {% endfor %}
+            {% if current_user.is_authenticated %}
+            {% if ns.show_unfavorite %}
+                <form class="favorite-btn-container p-3" method="post" action="{{ url_for('tours.unfavorite', tour_id=tour.tour_id) }}">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-heart-fill"></i> Added to favorites</button>
+                </form>
+            {% else %}
+                <form class="favorite-btn-container p-3" method="post" action="{{ url_for('tours.favorite', tour_id=tour.tour_id) }}">
+                    <button type="submit" class="btn btn-outline-danger"><i class="bi bi-heart"></i> Add to favorites</button>
+                </form>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</section>
+<section class="container">
+    <div class="row">
+        <div class="col-12 mb-5">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="reviews-tab" data-bs-toggle="tab" href="#reviews" role="tab" aria-controls="reviews" aria-selected="true">Reviews</a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link" id="add-review-tab" data-bs-toggle="tab" href="#add-review" role="tab" aria-controls="add-review" aria-selected="false"><i class="bi bi-plus-circle"></i> Add a review</a>
+              </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+              <div class="tab-pane fade show active" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                  <div class="container pt-5">
+                      <div class="row">
+                          {% if reviews %}
+                            {% for review in reviews %}
+                            <div class="col-12">
+                                <div class="card mb-4 w-75">
+                                  <div class="card-body">
+                                    <h5 class="card-title">{{ review.user.profile.name }} {{ review.user.profile.last_name }}</h5>
+                                      <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-bookmark-star"></i> {{ review.rating }} stars <span class="mx-1"> · </span> <i class="bi bi-clock"></i> {{ moment(review.date).fromNow() }}</h6>
+                                    <p class="card-text">{{ review.comment }}</p>
+                                      {% if current_user.user_id == review.user_id %}
+                                        <a href="#" class="card-link">Edit</a>
+                                        <a href="#" class="card-link">Delete</a>
+                                      {% endif %}
+                                  </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                          {% else %}
+                             <div class="col-12">
+                               <p class="lead">Nothing to see here :(</p>
+                             </div>
+                          {% endif %}
+                      </div>
+                  </div>
+              </div>
+              <div class="tab-pane fade" id="add-review" role="tabpanel" aria-labelledby="add-review-tab">
+                  {% if current_user.is_authenticated %}
+                    {% include 'sections/tours-add-review.html' %}
+                  {% else %}
+                  <div class="alert alert-danger mt-5" role="alert">
+                        You need to log in to post a review: <a href="{{ url_for('auth.login', next=url_for('tours.show', tour_id=tour.tour_id) ) }}" class="alert-link">Log in</a>
+                  </div>
+                  {% endif %}
+              </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
